@@ -18,6 +18,7 @@
 plugins {
 	id("com.android.library") version "8.10.1"
 	id("maven-publish")
+    id("signing")
 	id("org.jetbrains.dokka") version "2.1.0"
 }
 
@@ -81,6 +82,16 @@ dependencies {
 	runtimeOnly("org.jetbrains.dokka:android-documentation-plugin:2.1.0")
 	compileOnly("com.google.android:android:4.1.1.4")
 	compileOnly("androidx.appcompat:appcompat:$appcompat_version")
+}
+
+afterEvaluate {
+    signing {
+        useInMemoryPgpKeys(
+                findProperty("signing.key"),
+                findProperty("signing.password")
+        )
+        sign(publishing.publications["release"])
+    }
 }
 
 import groovy.json.JsonOutput
@@ -180,6 +191,14 @@ publishing {
 				password = findProperty("gpr.key")
 			}
 		}
+        maven {
+            name = "Sonatype"
+            url = uri("https://central.sonatype.com/api/v1/publish")
+            credentials {
+                username = findProperty("sonatype.username")
+                password = findProperty("sonatype.password")
+            }
+        }
 	}
 }
 
