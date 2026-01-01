@@ -18,12 +18,12 @@
 plugins {
 	id("com.android.library") version "8.10.1"
 	id("maven-publish")
-    id("signing")
+	id("signing")
 	id("org.jetbrains.dokka") version "2.1.0"
 }
 
 group = "io.github.devvigilante"
-version = "0.0.0"
+version = "0.0.1"
 
 def sdkMetaDir = layout.buildDirectory.dir("generated/sdkMetadata")
 
@@ -31,12 +31,12 @@ ext {
 	appcompat_version = "1.7.0"
 	material_design_version = "1.14.0-alpha01"
 	sdkInfo = [
-		minSdkSupported : "0.0.0",
+		minSdkSupported : "0.0.1",
 		versionNumber : 0,
 		versionType : "alpha",
-		subVersion : 0,
-		versionName : "0-alpha-0",
-		version : "0.0.0"
+		subVersion : 1,
+		versionName : "0-alpha-1",
+		version : "0.0.1"
 	]
 }
 
@@ -85,13 +85,13 @@ dependencies {
 }
 
 afterEvaluate {
-    signing {
-        useInMemoryPgpKeys(
-                findProperty("signing.key"),
-                findProperty("signing.password")
-        )
-        sign(publishing.publications["release"])
-    }
+	signing {
+		useInMemoryPgpKeys(
+				findProperty("signing.key"),
+				findProperty("signing.password")
+				)
+		sign(publishing.publications["release"])
+	}
 }
 
 import groovy.json.JsonOutput
@@ -111,7 +111,7 @@ tasks.register("generateSdkMetadata") {
 			versionType     : sdkInfo.versionType,
 			subVersion      : sdkInfo.subVersion,
 			versionName     : sdkInfo.versionName,
-			minApiLevel     : 21,
+			minApiLevel     : 26,
 			javaVersion     : 17
 		]
 
@@ -191,14 +191,14 @@ publishing {
 				password = findProperty("gpr.key")
 			}
 		}
-        maven {
-            name = "Sonatype"
-            url = uri("https://central.sonatype.com/api/v1/publish")
-            credentials {
-                username = findProperty("sonatype.username")
-                password = findProperty("sonatype.password")
-            }
-        }
+		maven {
+			name = "Sonatype"
+			url = uri("https://central.sonatype.com/api/v1/publish")
+			credentials {
+				username = findProperty("sonatype.username")
+				password = findProperty("sonatype.password")
+			}
+		}
 	}
 }
 
