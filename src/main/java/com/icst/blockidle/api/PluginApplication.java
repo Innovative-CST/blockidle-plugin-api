@@ -20,20 +20,87 @@ package com.icst.blockidle.api;
 import android.app.Application;
 
 /**
- * Wraps the Android {@link Application} object and exposes
- * plugin-safe utility methods.
+ * Provides a controlled wrapper around the host Android
+ * {@link android.app.Application} instance for Block IDLE plugins.
+ * <p>
+ * This class acts as the primary entry point for plugins at the
+ * application level. It exposes plugin-safe utility methods and
+ * runtime metadata while preventing direct, unrestricted access
+ * to internal host application APIs.
+ * </p>
+ *
+ * <p>
+ * In addition to the underlying {@link Application}, this wrapper
+ * supplies a {@link PluginRuntimeInfo} object that describes the
+ * execution environment, including the host application's version
+ * and the supported plugin API level.
+ * </p>
+ *
+ * <h3>Lifecycle</h3>
+ * <p>
+ * An instance of {@code PluginApplication} is created by the host
+ * application and passed to plugins during initialization via
+ * {@link AppPlugin#onCreateApplication(PluginApplication)}.
+ * </p>
+ *
+ * <h3>Compatibility</h3>
+ * <p>
+ * Plugin developers should rely on the API level exposed through
+ * {@link #getRuntimeInfo()} when performing compatibility checks,
+ * rather than comparing application version names or codes.
+ * </p>
+ *
+ * <h3>Design Notes</h3>
+ * <ul>
+ *   <li>Mirrors Android's {@code Context} + {@code Build} separation</li>
+ *   <li>Provides a stable ABI boundary for plugins</li>
+ *   <li>Allows future non-Android runtimes to reuse the same API</li>
+ * </ul>
+ *
+ * @see PluginRuntimeInfo
+ * @see AppPlugin
  */
 public class PluginApplication {
 
 	private final Application application;
 
+	private final PluginRuntimeInfo runtimeInfo;
+
 	/**
 	 * Creates a new {@code PluginApplication} wrapper.
+	 * <p>
+	 * This constructor is called by the host application when initializing
+	 * a plugin. It provides controlled access to the host
+	 * {@link android.app.Application} instance along with runtime metadata
+	 * describing the plugin execution environment.
+	 * </p>
 	 *
-	 * @param application The host application's {@link Application} instance.
+	 * <p>
+	 * Plugin developers should avoid holding strong references to the
+	 * underlying {@link Application} and instead rely on the exposed
+	 * plugin-safe APIs.
+	 * </p>
+	 *
+	 * @param application  the host application's {@link Application} instance
+	 * @param runtimeInfo  information about the Block IDLE plugin runtime,
+	 *                     including version and supported API level
+	 *
+	 * @see PluginRuntimeInfo
 	 */
-	public PluginApplication(Application application) {
+	public PluginApplication(Application application, PluginRuntimeInfo runtimeInfo) {
 		this.application = application;
+		this.runtimeInfo = runtimeInfo;
+	}
+
+	private final PluginRuntimeInfo runtimeInfo;
+
+	/**
+	 * Returns information about the current plugin runtime environment.
+	 *
+	 * @return runtime metadata for the host application
+	 */
+	public PluginRuntimeInfo getRuntimeInfo() {
+		return runtimeInfo;
 	}
 
 	/**
