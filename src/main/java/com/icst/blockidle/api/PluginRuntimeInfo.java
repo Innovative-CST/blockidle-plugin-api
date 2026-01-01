@@ -18,35 +18,35 @@
 package com.icst.blockidle.api;
 
 /**
- * Provides information about the Block IDLE plugin runtime environment.
+ * Provides information about the Block IDLE plugin runtime environment,
+ * including detailed SDK metadata.
  * <p>
- * This class exposes metadata about the host application that is running
- * the plugin, such as the application version and the supported plugin
- * API level. Plugin developers should rely on the {@link #getApiLevel()}
- * value for compatibility checks rather than comparing version names.
- * </p>
- *
- * <p>
- * This design mirrors Android's {@code android.os.Build.VERSION} system,
- * allowing plugins to adapt their behavior based on the runtime
- * capabilities provided by the host.
+ * This class exposes metadata about the host application and its SDK,
+ * allowing plugins to determine compatibility and retrieve versioning
+ * information safely. Plugins should use {@link #getSdkInfo()} for
+ * detailed SDK version and type checks.
  * </p>
  *
  * <h3>Usage example:</h3>
  * <pre>{@code
  * PluginRuntimeInfo info = pluginApplication.getRuntimeInfo();
- * if (info.getApiLevel() >= 2) {
- *     // Safe to use API level 2 features
+ * RuntimeSdkInfo sdk = info.getSdkInfo();
+ *
+ * if (sdk.getVersionNumber() >= 3) {
+ *     // Safe to use features introduced in SDK 3.x.x
  * }
+ *
+ * pluginApplication.log("Running on SDK " + sdk.getVersionName());
  * }</pre>
+ *
+ * @see RuntimeSdkInfo
  */
 public final class PluginRuntimeInfo {
 
 	/**
 	 * Human-readable version name of the host Block IDLE application.
 	 * <p>
-	 * This value is intended for display purposes only and should not
-	 * be used for compatibility checks.
+	 * For display purposes only; do not rely on this for compatibility checks.
 	 * </p>
 	 */
 	private final String versionName;
@@ -61,25 +61,25 @@ public final class PluginRuntimeInfo {
 	private final int versionCode;
 
 	/**
-	 * The plugin API level supported by the host runtime.
+	 * Detailed SDK metadata exposed to plugins.
 	 * <p>
-	 * This is the primary value plugins should use to determine
-	 * compatibility with the host application.
+	 * This includes semantic version, min SDK supported, release type,
+	 * and human-readable version name.
 	 * </p>
 	 */
-	private final int apiLevel;
+	private final RuntimeSdkInfo sdkInfo;
 
 	/**
 	 * Creates a new {@code PluginRuntimeInfo} instance.
 	 *
-	 * @param versionName the human-readable version name of the host application
-	 * @param versionCode the internal version code of the host application
-	 * @param apiLevel    the plugin API level supported by the host runtime
+	 * @param versionName human-readable version name of the host application
+	 * @param versionCode internal version code of the host application
+	 * @param sdkInfo     detailed runtime SDK metadata
 	 */
-	public PluginRuntimeInfo(String versionName, int versionCode, int apiLevel) {
+	public PluginRuntimeInfo(String versionName, int versionCode, RuntimeSdkInfo sdkInfo) {
 		this.versionName = versionName;
 		this.versionCode = versionCode;
-		this.apiLevel = apiLevel;
+		this.sdkInfo = sdkInfo;
 	}
 
 	/**
@@ -101,15 +101,15 @@ public final class PluginRuntimeInfo {
 	}
 
 	/**
-	 * Returns the plugin API level supported by the host runtime.
+	 * Returns detailed runtime SDK information.
 	 * <p>
-	 * Plugin developers should use this value to enable or disable
-	 * features based on API availability.
+	 * Plugins should use this for version and release-type checks instead of
+	 * relying on application version names.
 	 * </p>
 	 *
-	 * @return the supported plugin API level
+	 * @return the {@link RuntimeSdkInfo} describing the SDK
 	 */
-	public int getApiLevel() {
-		return apiLevel;
+	public RuntimeSdkInfo getSdkInfo() {
+		return sdkInfo;
 	}
 }
