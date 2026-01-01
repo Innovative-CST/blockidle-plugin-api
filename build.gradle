@@ -17,11 +17,26 @@
 
 plugins {
 	id("com.android.library") version "8.10.1"
+	id("maven-publish")
+	id("org.jetbrains.dokka") version "2.1.0"
 }
+
+group = "io.github.devvigilante"
+version = "0.0.0"
+
+def sdkMetaDir = layout.buildDirectory.dir("generated/sdkMetadata")
 
 ext {
 	appcompat_version = "1.7.0"
 	material_design_version = "1.14.0-alpha01"
+	sdkInfo = [
+		minSdkSupported : "0.0.0",
+		versionNumber : 0,
+		versionType : "alpha",
+		subVersion : 0,
+		versionName : "0-alpha-0",
+		version : "0.0.0"
+	]
 }
 
 android {
@@ -31,6 +46,12 @@ android {
 	defaultConfig {
 		minSdk 21
 		targetSdk 28
+	}
+
+	publishing {
+		singleVariant("release") {
+			withSourcesJar()
+		}
 	}
 
 	buildTypes {
@@ -46,7 +67,122 @@ android {
 	}
 }
 
+dokka {
+	dokkaGeneratorIsolation = ClassLoaderIsolation {}
+	dokkaSourceSets {
+		create("main") {
+			sourceRoots.from(file("src/main/java"))
+		}
+	}
+}
+
 dependencies {
+	// https://mvnrepository.com/artifact/org.jetbrains.dokka/android-documentation-plugin
+	runtimeOnly("org.jetbrains.dokka:android-documentation-plugin:2.1.0")
 	compileOnly("com.google.android:android:4.1.1.4")
 	compileOnly("androidx.appcompat:appcompat:$appcompat_version")
+}
+
+import groovy.json.JsonOutput
+
+tasks.register("generateSdkMetadata") {
+	outputs.dir(sdkMetaDir)
+
+	doLast {
+		def outFile = sdkMetaDir.get()
+				.file("META-INF/sdk-metadata.json")
+				.asFile
+
+		def metadata = [
+			version         : project.version.toString(),
+			minSdkSupported : sdkInfo.minSdkSupported,
+			versionNumber   : sdkInfo.versionNumber,
+			versionType     : sdkInfo.versionType,
+			subVersion      : sdkInfo.subVersion,
+			versionName     : sdkInfo.versionName,
+			minApiLevel     : 21,
+			javaVersion     : 17
+		]
+
+		outFile.parentFile.mkdirs()
+		outFile.text = JsonOutput.prettyPrint(
+				JsonOutput.toJson(metadata)
+				)
+	}
+}
+
+tasks.register("dokkaJavadocJar", Jar) {
+	group = "build"
+	description = "Assembles a Javadoc jar from Dokka output"
+
+	dependsOn(tasks.named("dokkaGenerateHtml"))
+
+	archiveClassifier.set("javadoc")
+	from(layout.buildDirectory.dir("dokka/html"))
+}
+
+publishing {
+	publications {
+		create("release", MavenPublication) {
+
+			groupId = group
+			artifactId = "plugin-sdk"
+			version = project.version.toString()
+
+			afterEvaluate {
+				from components.release
+			}
+
+			artifact(tasks.named("dokkaJavadocJar"))
+			artifact(
+					sdkMetaDir.get().file("META-INF/sdk-metadata.json")
+					) {
+						classifier = "metadata"
+						extension = "json"
+						builtBy(tasks.named("generateSdkMetadata"))
+					}
+
+			pom {
+				name.set("BlockIDLE Plugin SDK")
+				description.set("SDK for developing BlockIDLE plugins")
+				url.set("https://github.com/Innovative-CST/BlockIDLE")
+
+				licenses {
+					license {
+						name.set("GNU General Public License v3.0")
+						url.set("https://www.gnu.org/licenses/gpl-3.0.html")
+					}
+				}
+
+				developers {
+					developer {
+						id.set("DevVigilante")
+						name.set("Dev Kumar")
+						url.set("https://github.com/DevVigilante")
+					}
+				}
+
+				scm {
+					url.set("https://github.com/Innovative-CST/BlockIDLE")
+					connection.set("scm:git:https://github.com/Innovative-CST/BlockIDLE.git")
+					developerConnection.set("scm:git:ssh://git@github.com/Innovative-CST/BlockIDLE.git")
+				}
+			}
+		}
+	}
+
+	repositories {
+		maven {
+			name = "GitHubPackages"
+			url = "https://maven.pkg.github.com/Innovative-cst/BlockIDLE"
+			credentials {
+				username = findProperty("gpr.user")
+				password = findProperty("gpr.key")
+			}
+		}
+	}
+}
+
+tasks.withType(PublishToMavenRepository).configureEach {
+	dependsOn("generateSdkMetadata")
 }
