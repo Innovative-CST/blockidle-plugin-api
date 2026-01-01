@@ -92,8 +92,6 @@ public class PluginApplication {
 		this.runtimeInfo = runtimeInfo;
 	}
 
-	private final PluginRuntimeInfo runtimeInfo;
-
 	/**
 	 * Returns information about the current plugin runtime environment.
 	 *
