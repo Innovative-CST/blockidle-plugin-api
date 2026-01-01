@@ -40,6 +40,8 @@ ext {
 	]
 }
 
+extensions.extraProperties.set("sdkInfo", sdkInfo)
+
 android {
 	compileSdk 35
 	namespace "com.icst.blockidle.plugin"
