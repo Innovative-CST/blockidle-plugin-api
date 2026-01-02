@@ -17,9 +17,26 @@
 
 plugins {
 	id("com.android.library") version "8.10.1"
-	id("maven-publish")
-	id("signing")
 	id("org.jetbrains.dokka") version "2.1.0"
+    id "com.vanniktech.maven.publish" version "0.34.0"
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+}
+
+signing {
+    useInMemoryPgpKeys(
+        findProperty("signingInMemoryKey"),
+        findProperty("signingInMemoryKeyPassword")
+    )
+}
+
+afterEvaluate {
+    tasks.named("preBuild").configure {
+        dependsOn(tasks.named("generateSdkMetadata"))
+    }
 }
 
 group = "io.github.devvigilante"
@@ -51,18 +68,18 @@ android {
 		targetSdk 28
 	}
 
-	publishing {
-		singleVariant("release") {
-			withSourcesJar()
-		}
-	}
-
 	buildTypes {
 		release {
 			minifyEnabled false
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 		}
 	}
+
+    sourceSets {
+        main {
+            resources.srcDir(sdkMetaDir)
+        }
+    }
 
 	compileOptions {
 		sourceCompatibility JavaVersion.VERSION_17
@@ -84,16 +101,6 @@ dependencies {
 	runtimeOnly("org.jetbrains.dokka:android-documentation-plugin:2.1.0")
 	compileOnly("com.google.android:android:4.1.1.4")
 	compileOnly("androidx.appcompat:appcompat:$appcompat_version")
-}
-
-afterEvaluate {
-	signing {
-		useInMemoryPgpKeys(
-				findProperty("signing.key"),
-				findProperty("signing.password")
-				)
-		sign(publishing.publications["release"])
-	}
 }
 
 import groovy.json.JsonOutput
@@ -118,9 +125,7 @@ tasks.register("generateSdkMetadata") {
 		]
 
 		outFile.parentFile.mkdirs()
-		outFile.text = JsonOutput.prettyPrint(
-				JsonOutput.toJson(metadata)
-				)
+		outFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(metadata))
 	}
 }
 
@@ -134,76 +139,33 @@ tasks.register("dokkaJavadocJar", Jar) {
 	from(layout.buildDirectory.dir("dokka/html"))
 }
 
-publishing {
-	publications {
-		create("release", MavenPublication) {
+mavenPublishing {
+  coordinates(group, "blockidle-plugin-sdk", project.version.toString())
+  
+  pom {
+		name.set("BlockIDLE Plugin SDK")
+		description.set("SDK for developing BlockIDLE plugins")
+		url.set("https://github.com/Innovative-CST/BlockIDLE")
 
-			groupId = group
-			artifactId = "plugin-sdk"
-			version = project.version.toString()
-
-			afterEvaluate {
-				from components.release
-			}
-
-			artifact(tasks.named("dokkaJavadocJar"))
-			artifact(
-					sdkMetaDir.get().file("META-INF/sdk-metadata.json")
-					) {
-						classifier = "metadata"
-						extension = "json"
-						builtBy(tasks.named("generateSdkMetadata"))
-					}
-
-			pom {
-				name.set("BlockIDLE Plugin SDK")
-				description.set("SDK for developing BlockIDLE plugins")
-				url.set("https://github.com/Innovative-CST/BlockIDLE")
-
-				licenses {
-					license {
-						name.set("GNU General Public License v3.0")
-						url.set("https://www.gnu.org/licenses/gpl-3.0.html")
-					}
-				}
-
-				developers {
-					developer {
-						id.set("DevVigilante")
-						name.set("Dev Kumar")
-						url.set("https://github.com/DevVigilante")
-					}
-				}
-
-				scm {
-					url.set("https://github.com/Innovative-CST/BlockIDLE")
-					connection.set("scm:git:https://github.com/Innovative-CST/BlockIDLE.git")
-					developerConnection.set("scm:git:ssh://git@github.com/Innovative-CST/BlockIDLE.git")
-				}
+		licenses {
+			license {
+				name.set("GNU General Public License v3.0")
+				url.set("https://www.gnu.org/licenses/gpl-3.0.html")
 			}
 		}
-	}
 
-	repositories {
-		maven {
-			name = "GitHubPackages"
-			url = "https://maven.pkg.github.com/Innovative-cst/BlockIDLE"
-			credentials {
-				username = findProperty("gpr.user")
-				password = findProperty("gpr.key")
+		developers {
+			developer {
+				id.set("DevVigilante")
+				name.set("Dev Kumar")
+				url.set("https://github.com/DevVigilante")
 			}
 		}
-		maven {
-			name = "Sonatype"
-			url = uri("https://central.sonatype.com/api/v1/publish")
-			credentials {
-				username = findProperty("sonatype.username")
-				password = findProperty("sonatype.password")
-			}
-		}
-	}
-}
 
-tasks.withType(PublishToMavenRepository).configureEach {
-	dependsOn("generateSdkMetadata")
+		scm {
+			url.set("https://github.com/Innovative-CST/BlockIDLE")
+			connection.set("scm:git:https://github.com/Innovative-CST/BlockIDLE.git")
+			developerConnection.set("scm:git:ssh://git@github.com/Innovative-CST/BlockIDLE.git")
+		}
+    }
 }
