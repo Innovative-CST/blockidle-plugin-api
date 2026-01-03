@@ -18,25 +18,25 @@
 plugins {
 	id("com.android.library") version "8.10.1"
 	id("org.jetbrains.dokka") version "2.1.0"
-    id "com.vanniktech.maven.publish" version "0.34.0"
+	id "com.vanniktech.maven.publish" version "0.34.0"
 }
 
 mavenPublishing {
-    publishToMavenCentral()
-    signAllPublications()
+	publishToMavenCentral()
+	signAllPublications()
 }
 
 signing {
-    useInMemoryPgpKeys(
-        findProperty("signingInMemoryKey"),
-        findProperty("signingInMemoryKeyPassword")
-    )
+	useInMemoryPgpKeys(
+			findProperty("signingInMemoryKey"),
+			findProperty("signingInMemoryKeyPassword")
+			)
 }
 
 afterEvaluate {
-    tasks.named("preBuild").configure {
-        dependsOn(tasks.named("generateSdkMetadata"))
-    }
+	tasks.named("preBuild").configure {
+		dependsOn(tasks.named("generateSdkMetadata"))
+	}
 }
 
 group = "io.github.devvigilante"
@@ -75,11 +75,11 @@ android {
 		}
 	}
 
-    sourceSets {
-        main {
-            resources.srcDir(sdkMetaDir)
-        }
-    }
+	sourceSets {
+		main {
+			resources.srcDir(sdkMetaDir)
+		}
+	}
 
 	compileOptions {
 		sourceCompatibility JavaVersion.VERSION_17
@@ -140,9 +140,9 @@ tasks.register("dokkaJavadocJar", Jar) {
 }
 
 mavenPublishing {
-  coordinates(group, "blockidle-plugin-sdk", project.version.toString())
-  
-  pom {
+	coordinates(group, "blockidle-plugin-sdk", project.version.toString())
+
+	pom {
 		name.set("BlockIDLE Plugin SDK")
 		description.set("SDK for developing BlockIDLE plugins")
 		url.set("https://github.com/Innovative-CST/BlockIDLE")
@@ -167,5 +167,5 @@ mavenPublishing {
 			connection.set("scm:git:https://github.com/Innovative-CST/BlockIDLE.git")
 			developerConnection.set("scm:git:ssh://git@github.com/Innovative-CST/BlockIDLE.git")
 		}
-    }
+	}
 }
